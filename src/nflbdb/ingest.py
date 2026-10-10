@@ -92,11 +92,21 @@ def convert_one(name: str, *, overwrite: bool = False) -> dict:
         return {"table": name, "status": "skipped", "parquet": str(dst)}
 
     t0 = time.perf_counter()
+    header = pl.read_csv(src, n_rows=0).columns
+    # "NA" is a literal sentinel in these files, and it means two different things.
+    # In `lined_up_position` it means "the play was killed by a penalty before the snap"
+    # -- real information, which must survive ingestion as a string. Everywhere else it
+    # is just a missing value, and leaving it alone silently types every numeric column
+    # in combine_results (forty, ten_yd_split, three_cone, vertical, bench_reps, the NGS
+    # scores) as String. So: map "NA" to null per column, excluding the one place it
+    # carries meaning.
+    nulls: dict[str, str] | list[str] = {
+        c: "NA" for c in header if c not in _KEEP_LITERAL_NA
+    }
     lf = pl.scan_csv(
         src,
         schema_overrides=_overrides_for(src),
-        # keep the literal "NA" sentinel; "" is the only real null marker in these files
-        null_values=[""],
+        null_values=nulls,
         infer_schema_length=50_000,
         low_memory=True,
     )

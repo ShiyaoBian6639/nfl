@@ -1,3 +1,95 @@
+# Verified against the real data (2026-10-10)
+
+The full dataset is downloaded and audited. Regenerate with `make audit`;
+`reports/data_audit.md` carries the detail. Status of every prior claim:
+
+## Confirmed exactly
+
+| Claim | Verified value |
+|---|---|
+| Shipped row counts differ from the Data tab | **All forum counts exact.** combine_tracking 463,189 · player_play 314,197 · game_tracking 3,665,443 / 7,827,944 / 11,160,903. Total 23,434,208 rows → 394 MB parquet |
+| 2024 back-pedal reps are truncated | **Yes.** Median rep duration 2023 **10.9 s** · 2024 **6.1 s** · 2025 **9.7 s** |
+| Tracked 40 times run slow | **+0.35 s median offset**, corr **0.91** with the official clock (n = 389) |
+| `dis` under-counts distance | **sum(dis) / integrated path = 0.915** (37.09 yd vs 40.67 yd over a 40) |
+| `dir` convention is 0° = +y, clockwise | **Yes**, 0.23° median heading error; every alternative ≥ 90° |
+| `lined_up_position` has a literal `"NA"` | **Yes**, exactly 1,383 rows |
+| 13 prospects never took an NFL snap | **Yes**, 497 of 510 appear in `player_play` |
+| BALL frames: 551 events, 54 players | **Exact.** 32,095 BALL rows · 551 events · 54 players (37 WR, 16 TE, 1 FB) |
+
+## 🔴 New — found only by auditing the real files
+
+### Every numeric column in `combine_results` ships as a string
+
+`forty`, `ten_yd_split`, `vertical`, `broad_jump`, `three_cone`, `short_shuttle`,
+`bench_reps`, `ngs_college_production_score`, `ngs_final_score` and `combine_position`
+all arrive as **String**, because missing values are the literal token `"NA"` and there
+are **zero real nulls**. The same sentinel documented for `lined_up_position` runs through
+the whole table.
+
+This is a quiet, high-damage trap. pandas converts `"NA"` to NaN by default, so a pandas
+user gets floats and never notices — while polars with `null_values=[""]` keeps the column
+as text, and `df["forty"].mean()` either errors or silently does the wrong thing. Two
+analysts on the same data get different answers.
+
+`ingest.py` now maps `"NA"` to null **per column**, excluding `lined_up_position` where
+the token carries real meaning (penalty killed the play before the snap). Verified after
+the fix: `combine_results` has exactly one String column left (`combine_position`), and
+all 1,383 literal `"NA"` values in `lined_up_position` survive.
+
+### The gauntlet has no ball tracking
+
+`GAUNTLET_DRILL` has **zero** BALL rows — in WR (200 attempts / 107 players), TE (81 / 41)
+*or* DB (123 / 119). Ball tracking lives in the **route** drills instead
+(`DAGGER_ROUTE_LEFT`, `COMEBACK_ROUTE_RIGHT`, `POST_CORNER_ROUTE_RIGHT`,
+`SLOT_STRIKE_ROUTE_LEFT`, `GO_ROUTE_RIGHT`, …), and only for the 54 players above.
+
+→ "Gauntlet speed-retention through the catch" is **not executable as specified**. A
+route-drill variant exists but caps out at n = 54.
+
+### Drill names collide on spelling
+
+Two strings for the same drill, which silently halves the sample:
+
+- `PASS_PRO-MIRROR_DRILL` (84 attempts) vs `PASS_PRO_MIRROR_DRILL` (37) — **hyphen vs underscore**
+- `OVER_SHOULDER_ADJUST` vs `OVER_THE_SHOULDER_ADJUST`
+- `LINE_DRILL` (167 / 85) vs `LINE` (50 / 33)
+- `SPEED_OUT_ROUTE_LEFT` (87 / 76) vs `SPEED_OUT_LEFT` (37 / 31)
+
+(`TERYL_AUSTIN_DRILL_1` and `_2` are genuinely different drills, not a collision.)
+
+### `SKILL_DRILLS_LB` exists and is not in the published dictionary
+
+6 drills, 4 players. Too small to use, but it breaks any code that enumerates the
+documented `drill_type` list.
+
+### Agility-drill opt-out is severe, and test-retest is thin
+
+| Test | Missing | Tracking players | With ≥ 2 reps |
+|---|---:|---:|---:|
+| 40-yard dash | 86 / 510 (16.9%) | 418 | **375** |
+| Three-cone | **330 / 510 (64.7%)** | 160 | **38** |
+| Short shuttle | **309 / 510 (60.6%)** | 170 | **42** |
+| Bench press | 318 / 510 (62.4%) | — | — |
+| Vertical / broad | ~14–17% | — | — |
+
+Nearly two-thirds of the cohort skipped the three-cone and the shuttle. More damaging:
+**only 38 and 42 prospects have two tracked reps**, so reliability for those drills rests
+on ~40 players. The 40 is the opposite — 375 players with ≥2 reps.
+
+The DB skill drills are better: `BACK_PEDAL_AND_TRANSITION_45_DEGREE_REACTION` has 241
+attempts across 122 players, i.e. roughly two reps each.
+
+### Cohort composition — no QBs, and effectively no running backs
+
+n = 510: **WR 106 · CB 60 · G 51 · T 50 · DT 47 · TE 42 · DE 36 · OLB 30 · SS 28 ·
+FS 25 · C 20 · NT 5 · DB 5 · ILB 2 · FB 1 · MLB 1 · RB 1**
+
+No quarterbacks and no specialists. **RB and FB are one player each**, so there is no
+running-back analysis in this dataset. Linebackers total 33 (and only 4 ran LB drills).
+Grouped: OL 121 · DB 118 · EDGE (DE+OLB) 66 · interior DL 52 · WR 106 · TE 42.
+
+---
+
 # Data quirks & host clarifications
 
 Everything here is sourced from the Kaggle competition forum (captured 2026-10-10). **Host-confirmed**

@@ -35,16 +35,19 @@ That sentence is the whole competition. Everything else is support.
 - Synthetic fixtures reproduce the real schema *and* its quirks, so the pipeline runs
   end-to-end before the download
 
+- **Data downloaded and audited** (2026-10-10). 2.31 GB → 394 MB parquet, 23.4M rows.
+  `reports/data_audit.md` opens with the decisions table; verified findings are at the top
+  of `docs/data-quirks.md`.
+
 ### Blocked
 
-- **No competition data.** Needs a Kaggle account that has joined the hackathon plus an
-  API token. Everything below step 1 waits on this.
+- Nothing. Step 2 — choosing the research question — is now the live decision.
 
 ---
 
 ## Sequence
 
-### 1 · Get the data and audit it — *blocked on Kaggle access*
+### 1 · Get the data and audit it — ✅ **done**
 
 ```
 make data && make parquet && make audit

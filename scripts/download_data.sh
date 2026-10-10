@@ -5,9 +5,10 @@
 #   1. A Kaggle account that has JOINED the hackathon:
 #        https://www.kaggle.com/competitions/nfl-big-data-bowl-2027  -> "Join Hackathon"
 #      (You must accept the rules; the API returns 403 until you do.)
-#   2. An API token: Kaggle -> Settings -> API -> "Create New Token" downloads kaggle.json
-#        mkdir -p ~/.kaggle && mv ~/Downloads/kaggle.json ~/.kaggle/ && chmod 600 ~/.kaggle/kaggle.json
-#      Or export KAGGLE_USERNAME / KAGGLE_KEY.
+#   2. An API token. CLI 2.2.x uses a single "KGAT_..." token, NOT the old
+#      username+key kaggle.json. Get it from https://www.kaggle.com/settings/api, then:
+#        printf '%s\n' 'KGAT_...' > ~/.kaggle/access_token && chmod 600 ~/.kaggle/access_token
+#      Or export KAGGLE_API_TOKEN, or run `kaggle auth login` for the OAuth flow.
 #
 # The data is CC BY-NC 4.0 and must not be redistributed. data/ is gitignored.
 
@@ -25,14 +26,18 @@ if [[ -z "$KAGGLE_BIN" ]]; then
   exit 1
 fi
 
-if [[ ! -f "${HOME}/.kaggle/kaggle.json" && -z "${KAGGLE_KEY:-}" ]]; then
+if [[ ! -f "${HOME}/.kaggle/access_token" && ! -f "${HOME}/.kaggle/kaggle.json" \
+      && -z "${KAGGLE_API_TOKEN:-}" && -z "${KAGGLE_KEY:-}" ]]; then
   cat >&2 <<'MSG'
 ERROR: no Kaggle credentials found.
 
   1. Sign in at https://www.kaggle.com and JOIN the hackathon:
        https://www.kaggle.com/competitions/nfl-big-data-bowl-2027
-  2. https://www.kaggle.com/settings -> API -> "Create New Token"
-  3. mkdir -p ~/.kaggle && mv ~/Downloads/kaggle.json ~/.kaggle/ && chmod 600 ~/.kaggle/kaggle.json
+  2. https://www.kaggle.com/settings/api -> create a token (a "KGAT_..." string)
+  3. printf '%s\n' 'KGAT_...' > ~/.kaggle/access_token && chmod 600 ~/.kaggle/access_token
+
+  NOTE: CLI 2.2.x reads ~/.kaggle/access_token. The older username+key kaggle.json
+  format is a different scheme -- putting a KGAT_ token in it will not authenticate.
 MSG
   exit 1
 fi
@@ -49,6 +54,13 @@ if [[ -f "$ZIP" ]]; then
   shasum -a 256 "$ZIP" | tee "${RAW}/.zip.sha256"
   rm -f "$ZIP"
 fi
+
+# the archive nests everything one level deep under the competition slug
+if [[ -d "${RAW}/${COMP}" ]]; then
+  echo "==> flattening ${COMP}/ into ${RAW}"
+  mv "${RAW}/${COMP}"/*.csv "$RAW"/ && rmdir "${RAW}/${COMP}"
+fi
+rm -f "${RAW}"/*.kaggle-partial
 
 echo "==> done"
 ls -lh "$RAW"
