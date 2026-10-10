@@ -120,7 +120,11 @@ def attempt_features(
             "mean_cut_min_speed": _safe(np.mean([c.min_speed for c in cuts])),
             "mean_cut_turn_radius_yd": _safe(np.mean([c.min_turn_radius for c in cuts
                                                       if np.isfinite(c.min_turn_radius)] or [np.nan])),
-            "mean_cut_recovery_s": _safe(np.nanmean([c.recovery_time_s for c in cuts])),
+            # a cut the athlete never recovers from has recovery_time_s = nan; if that is
+            # every cut in the attempt, np.nanmean would warn on an empty slice
+            "mean_cut_recovery_s": _safe(np.nanmean(_rec)) if (
+                _rec := [c.recovery_time_s for c in cuts if np.isfinite(c.recovery_time_s)]
+            ) else np.nan,
             "n_reversals": float(sum(c.is_reversal for c in cuts)),
             "mean_lateral_excursion_yd": _safe(np.nanmean([c.lateral_excursion_yd for c in cuts])),
             "min_lateral_excursion_yd": _safe(np.nanmin([c.lateral_excursion_yd for c in cuts])),
