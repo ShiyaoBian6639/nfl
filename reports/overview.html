@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combine to Kickoff</title>
+
+<style>
+  /* ---------- tokens: light is the base, both dark states redefine only tokens ---------- */
+  :root {
+    color-scheme: light;
+    --ground:   #f6f8fa;
+    --surface:  #ffffff;
+    --sunken:   #eef1f5;
+    --ink:      #0e131a;
+    --ink-2:    #49535f;
+    --ink-3:    #7b8794;
+    --line:     #dde3ea;
+    --line-2:   #c6cfd9;
+    --accent:   #19539b;
+    --accent-s: #e8eff8;
+    --signal:   #b8431a;
+    --signal-s: #fbeee8;
+    --good:     #0d6e4e;
+    --good-s:   #e6f3ee;
+    --shadow:   0 1px 2px rgba(14,19,26,.05), 0 8px 24px -16px rgba(14,19,26,.22);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground:   #0d1116;
+      --surface:  #151b22;
+      --sunken:   #1b222b;
+      --ink:      #eef3f8;
+      --ink-2:    #a3aeba;
+      --ink-3:    #6f7b88;
+      --line:     #242d37;
+      --line-2:   #38434f;
+      --accent:   #7cb0ec;
+      --accent-s: #16263c;
+      --signal:   #ef8a56;
+      --signal-s: #362014;
+      --good:     #46c495;
+      --good-s:   #11291f;
+      --shadow:   0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground:   #0d1116;
+    --surface:  #151b22;
+    --sunken:   #1b222b;
+    --ink:      #eef3f8;
+    --ink-2:    #a3aeba;
+    --ink-3:    #6f7b88;
+    --line:     #242d37;
+    --line-2:   #38434f;
+    --accent:   #7cb0ec;
+    --accent-s: #16263c;
+    --signal:   #ef8a56;
+    --signal-s: #362014;
+    --good:     #46c495;
+    --good-s:   #11291f;
+    --shadow:   0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+
+  /* ---------- base ---------- */
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px 96px; }
+  p { margin: 0 0 1em; max-width: 70ch; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .88em; background: var(--sunken); color: var(--ink);
+    padding: .1em .36em; border-radius: 3px; border: 1px solid var(--line);
+  }
+  strong { font-weight: 650; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  /* ---------- masthead ---------- */
+  header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+  .top-inner { max-width: 1120px; margin: 0 auto; padding: 44px 24px 36px; }
+  .eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--ink-3); margin: 0 0 18px;
+  }
+  h1 {
+    font-size: clamp(2.1rem, 5.2vw, 3.35rem); line-height: 1.04; letter-spacing: -.027em;
+    font-weight: 760; margin: 0 0 .5em; text-wrap: balance; max-width: 18ch;
+  }
+  .thesis { font-size: 1.1rem; color: var(--ink-2); max-width: 62ch; margin: 0 0 30px; }
+  .thesis em { color: var(--ink); font-style: normal; font-weight: 600; }
+
+  .meta { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .meta > div {
+    flex: 1 1 150px; padding: 13px 16px; border-right: 1px solid var(--line); background: var(--surface);
+  }
+  .meta > div:last-child { border-right: 0; }
+  .meta dt {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 5px;
+  }
+  .meta dd {
+    margin: 0; font-size: 1.02rem; font-weight: 620; letter-spacing: -.012em;
+    font-variant-numeric: tabular-nums;
+  }
+  .meta dd small { display: block; font-weight: 450; font-size: .76rem; color: var(--ink-3); letter-spacing: 0; }
+
+  /* ---------- sections ---------- */
+  section { padding-top: 64px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; border-top: 2px solid var(--ink); padding-top: 12px; margin-bottom: 26px; }
+  .sec-num {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px; letter-spacing: .1em; color: var(--ink-3); padding-top: .35em;
+  }
+  h2 { font-size: clamp(1.5rem, 3.2vw, 2rem); line-height: 1.12; letter-spacing: -.021em; font-weight: 700; margin: 0; text-wrap: balance; }
+  .sec-sub { color: var(--ink-2); max-width: 68ch; margin: -12px 0 30px; }
+  h3 {
+    font-size: 1.02rem; font-weight: 660; letter-spacing: -.008em; margin: 34px 0 10px;
+  }
+
+  /* ---------- cards / callouts ---------- */
+  .grid { display: grid; gap: 14px; }
+  .g3 { grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 7px;
+    padding: 17px 19px; box-shadow: var(--shadow);
+  }
+  .card h4 {
+    margin: 0 0 7px; font-size: .95rem; font-weight: 650; letter-spacing: -.006em;
+  }
+  .card p { margin: 0; font-size: .91rem; color: var(--ink-2); max-width: none; }
+  .tag {
+    display: inline-block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 3px; margin-bottom: 9px;
+  }
+  .tag.block { background: var(--signal-s); color: var(--signal); }
+  .tag.ok    { background: var(--good-s);   color: var(--good); }
+  .tag.note  { background: var(--accent-s); color: var(--accent); }
+
+  .callout {
+    border-left: 3px solid var(--signal); background: var(--signal-s);
+    padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 22px 0;
+  }
+  .callout p { margin: 0; max-width: none; font-size: .94rem; }
+  .callout .lbl {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px;
+    letter-spacing: .13em; text-transform: uppercase; color: var(--signal); display: block; margin-bottom: 5px;
+  }
+
+  /* ---------- tables ---------- */
+  .scroll { overflow-x: auto; margin: 20px 0; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: .885rem; min-width: 620px; }
+  th, td { text-align: left; padding: 9px 13px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 500; background: var(--sunken); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.lead td { background: var(--accent-s); }
+  tr.dead td { color: var(--ink-3); }
+  .pill {
+    display: inline-block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px; letter-spacing: .06em; padding: 1px 6px; border-radius: 3px; white-space: nowrap;
+    border: 1px solid var(--line-2); color: var(--ink-2);
+  }
+  .pill.hi { background: var(--good-s); color: var(--good); border-color: transparent; }
+  .pill.md { background: var(--accent-s); color: var(--accent); border-color: transparent; }
+  .pill.lo { background: var(--signal-s); color: var(--signal); border-color: transparent; }
+
+  /* ---------- figures ---------- */
+  figure { margin: 26px 0; }
+  figure svg { display: block; width: 100%; max-width: 100%; height: auto; }
+  .figframe { background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 22px 20px 16px; box-shadow: var(--shadow); overflow-x: auto; }
+  figcaption {
+    font-size: .845rem; color: var(--ink-2); margin-top: 12px; max-width: 76ch;
+    padding-top: 11px; border-top: 1px solid var(--line);
+  }
+
+  /* ---------- rubric bar ---------- */
+  .rubric { display: flex; gap: 2px; margin: 4px 0 10px; height: 46px; }
+  .rubric div {
+    display: flex; align-items: center; justify-content: center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 600;
+    color: #fff; border-radius: 3px;
+  }
+  .rb1 { flex: 30; background: #19539b; }
+  .rb2 { flex: 30; background: #2f7fbf; }
+  .rb3 { flex: 20; background: #b8431a; }
+  .rb4 { flex: 20; background: #d4752f; }
+  .rubric-key { display: flex; gap: 2px; font-size: .78rem; color: var(--ink-2); }
+  .rubric-key div { text-align: center; }
+  .rubric-key .rb1, .rubric-key .rb2, .rubric-key .rb3, .rubric-key .rb4 {
+    background: none; color: var(--ink-2); display: block; font-family: inherit; font-weight: 500;
+  }
+  .split-note {
+    display: flex; gap: 2px; margin-bottom: 18px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .split-note div { border-top: 1px solid var(--line-2); padding-top: 5px; text-align: center; }
+  .sn-l { flex: 60; } .sn-r { flex: 40; }
+
+  /* ---------- lists ---------- */
+  ul.clean { list-style: none; padding: 0; margin: 14px 0; }
+  ul.clean li {
+    padding: 9px 0 9px 26px; border-bottom: 1px solid var(--line); position: relative; font-size: .93rem;
+  }
+  ul.clean li:last-child { border-bottom: 0; }
+  ul.clean li::before {
+    content: ""; position: absolute; left: 6px; top: 1.05em; width: 6px; height: 6px;
+    border-radius: 50%; background: var(--line-2);
+  }
+  ul.clean li.done::before { background: var(--good); }
+  ul.clean li.block::before { background: var(--signal); }
+  ul.clean li.todo::before { background: var(--line-2); }
+  ol.budget { list-style: none; padding: 0; margin: 0; counter-reset: b; }
+  ol.budget li {
+    display: flex; align-items: baseline; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line);
+    font-size: .9rem;
+  }
+  ol.budget li:last-child { border-bottom: 0; font-weight: 650; }
+  ol.budget .w {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums;
+    color: var(--ink-3); min-width: 54px; text-align: right; font-size: .85rem;
+  }
+  ol.budget .bar { flex: 1; height: 7px; background: var(--sunken); border-radius: 2px; overflow: hidden; }
+  ol.budget .bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+  ol.budget .nm { min-width: 128px; }
+
+  footer { margin-top: 70px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: .84rem; }
+  @media (max-width: 640px) {
+    .top-inner { padding: 32px 20px 28px; }
+    .wrap { padding: 0 20px 72px; }
+    ol.budget .nm { min-width: 100px; }
+    ol.budget .bar { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <p class="eyebrow">NFL Big Data Bowl 2027 &nbsp;·&nbsp; Project brief &nbsp;·&nbsp; 10 Oct 2026</p>
+    <h1>Combine to Kickoff</h1>
+    <p class="thesis">
+      The NFL has released <em>every frame of Combine sensor tracking that exists</em> — three draft
+      classes, 2023 to 2025 — alongside in-game tracking for the same 510 players. The task is to find a
+      link between how a prospect moves in Indianapolis in February and how he plays on Sundays. This is a
+      <em>judged hackathon</em>: no leaderboard, no metric, no submission file. Just 2,000 words, nine
+      figures, and a panel of NFL team analysts.
+    </p>
+    <dl class="meta">
+      <div><dt>Deadline</dt><dd>6 Jan 2027<small>88 days out</small></dd></div>
+      <div><dt>Prize pool</dt><dd>$100,000<small>Open + University tracks</small></dd></div>
+      <div><dt>Deliverable</dt><dd>Writeup<small>+ public notebook</small></dd></div>
+      <div><dt>Data</dt><dd>2.31 GB<small>9 files · 158 columns</small></dd></div>
+      <div><dt>Cohort</dt><dd>510<small>rookies, 2023–25</small></dd></div>
+    </dl>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============================= INPUTS ============================= -->
+  <section id="inputs">
+    <div class="sec-head"><span class="sec-num mono">01</span><h2>What we actually have</h2></div>
+    <p class="sec-sub">
+      Nine CSVs that split cleanly in two: a <strong>Combine side</strong> keyed on the prospect, and an
+      <strong>NFL side</strong> keyed on the snap. The whole competition is the bridge between them.
+    </p>
+
+    <figure>
+      <div class="figframe">
+        <svg viewBox="0 0 940 430" role="img" aria-label="Join graph of the nine competition files. The 510-player roster links a Combine side of drill tracking and test results to an NFL side of per-snap Next Gen Stats and in-game tracking. The in-game tracking file contains only cohort players, so no defender is present and relational features must come from the per-snap stats file.">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"/>
+            </marker>
+            <marker id="arS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 1 L 9 5 L 0 9 z" fill="#b8431a"/>
+            </marker>
+          </defs>
+
+          <!-- column headers -->
+          <text x="150" y="22" text-anchor="middle" font-size="11.5" letter-spacing="1.6" fill="currentColor" opacity=".5" font-family="ui-monospace, Menlo, monospace">COMBINE SIDE</text>
+          <text x="470" y="22" text-anchor="middle" font-size="11.5" letter-spacing="1.6" fill="currentColor" opacity=".5" font-family="ui-monospace, Menlo, monospace">THE SPINE</text>
+          <text x="790" y="22" text-anchor="middle" font-size="11.5" letter-spacing="1.6" fill="currentColor" opacity=".5" font-family="ui-monospace, Menlo, monospace">NFL SIDE</text>
+          <line x1="20" y1="34" x2="920" y2="34" stroke="currentColor" opacity=".16"/>
+
+          <!-- spine -->
+          <rect x="382" y="176" width="176" height="60" rx="5" fill="none" stroke="currentColor" stroke-width="2"/>
+          <text x="470" y="200" text-anchor="middle" font-size="13" font-weight="650" fill="currentColor">players.csv</text>
+          <text x="470" y="219" text-anchor="middle" font-size="11" fill="currentColor" opacity=".6" font-family="ui-monospace, Menlo, monospace">510 rows · PK nfl_id</text>
+
+          <!-- combine side boxes -->
+          <rect x="22" y="66" width="256" height="56" rx="5" fill="none" stroke="currentColor" opacity=".55"/>
+          <text x="38" y="88" font-size="12.5" font-weight="600" fill="currentColor">combine_tracking.csv</text>
+          <text x="38" y="106" font-size="10.5" fill="currentColor" opacity=".6" font-family="ui-monospace, Menlo, monospace">463k frames · 6,310 attempts · 10 Hz</text>
+
+          <rect x="22" y="146" width="256" height="56" rx="5" fill="none" stroke="currentColor" opacity=".55"/>
+          <text x="38" y="168" font-size="12.5" font-weight="600" fill="currentColor">combine_results.csv</text>
+          <text x="38" y="186" font-size="10.5" fill="currentColor" opacity=".6" font-family="ui-monospace, Menlo, monospace">40, 3-cone, shuttle, NGS scores</text>
+
+          <rect x="22" y="226" width="256" height="56" rx="5" fill="none" stroke="currentColor" opacity=".55"/>
+          <text x="38" y="248" font-size="12.5" font-weight="600" fill="currentColor">player_career_successes.csv</text>
+          <text x="38" y="266" font-size="10.5" fill="currentColor" opacity=".6" font-family="ui-monospace, Menlo, monospace">snaps, starts, Pro Bowls</text>
+
+          <!-- NFL side boxes -->
+          <rect x="662" y="66" width="256" height="56" rx="5" fill="none" stroke="currentColor" opacity=".55"/>
+          <text x="678" y="88" font-size="12.5" font-weight="600" fill="currentColor">player_play.csv</text>
+          <text x="678" y="106" font-size="10.5" fill="currentColor" opacity=".6" font-family="ui-monospace, Menlo, monospace">314k snaps · NGS per play</text>
+
+          <rect x="662" y="146" width="256" height="56" rx="5" fill="none" stroke="#b8431a" stroke-width="2"/>
+          <text x="678" y="168" font-size="12.5" font-weight="600" fill="#b8431a">game_tracking_2023/24/25.csv</text>
+          <text x="678" y="186" font-size="10.5" fill="#b8431a" opacity=".85" font-family="ui-monospace, Menlo, monospace">22.7M frames · 10 Hz</text>
+
+          <rect x="662" y="226" width="256" height="56" rx="5" fill="none" stroke="currentColor" opacity=".55"/>
+          <text x="678" y="248" font-size="12.5" font-weight="600" fill="currentColor">games.csv</text>
+          <text x="678" y="266" font-size="10.5" fill="currentColor" opacity=".6" font-family="ui-monospace, Menlo, monospace">1,002 games · 2023–25</text>
+
+          <!-- edges: combine -> spine -->
+          <path d="M 278 94 L 330 94 L 330 194 L 376 194" fill="none" stroke="currentColor" opacity=".45" marker-end="url(#ar)"/>
+          <path d="M 278 174 L 330 174 L 330 200 L 376 200" fill="none" stroke="currentColor" opacity=".45" marker-end="url(#ar)"/>
+          <path d="M 278 254 L 330 254 L 330 212 L 376 212" fill="none" stroke="currentColor" opacity=".45" marker-end="url(#ar)"/>
+          <text x="330" y="150" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".55" font-family="ui-monospace, Menlo, monospace">nfl_id</text>
+
+          <!-- edges: spine -> nfl -->
+          <path d="M 564 194 L 612 194 L 612 94 L 656 94" fill="none" stroke="currentColor" opacity=".45" marker-end="url(#ar)"/>
+          <path d="M 564 206 L 612 206 L 612 174 L 656 174" fill="none" stroke="currentColor" opacity=".45" marker-end="url(#ar)"/>
+          <text x="614" y="150" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".55" font-family="ui-monospace, Menlo, monospace">nfl_id</text>
+
+          <!-- play key between the two NFL files -->
+          <path d="M 790 122 L 790 142" fill="none" stroke="currentColor" opacity=".45" marker-end="url(#ar)"/>
+          <path d="M 790 226 L 790 206" fill="none" stroke="currentColor" opacity=".45" marker-end="url(#ar)"/>
+          <text x="780" y="136" text-anchor="end" font-size="10" fill="currentColor" opacity=".55" font-family="ui-monospace, Menlo, monospace">game_id, play_id, nfl_id</text>
+
+          <!-- the hole -->
+          <line x1="20" y1="316" x2="920" y2="316" stroke="currentColor" opacity=".16"/>
+          <rect x="474" y="334" width="446" height="74" rx="5" fill="#b8431a" fill-opacity=".07" stroke="#b8431a" stroke-dasharray="4 3"/>
+          <text x="492" y="356" font-size="12" font-weight="650" fill="#b8431a">The structural hole</text>
+          <text x="492" y="375" font-size="11.5" fill="currentColor">In-game tracking holds the 510 cohort players and nobody else.</text>
+          <text x="492" y="393" font-size="11.5" fill="currentColor">No defender, no ball, no QB — so separation cannot be computed.</text>
+          <path d="M 790 282 L 790 330" fill="none" stroke="#b8431a" stroke-width="1.6" marker-end="url(#arS)"/>
+
+          <text x="22" y="356" font-size="12" font-weight="650" fill="currentColor">The consequence</text>
+          <text x="22" y="375" font-size="11.5" fill="currentColor">Every relational feature — separation, cushion, pressure</text>
+          <text x="22" y="393" font-size="11.5" fill="currentColor">probability — must come pre-computed from player_play.</text>
+          <path d="M 300 370 L 466 370" fill="none" stroke="currentColor" opacity=".4" marker-end="url(#ar)"/>
+        </svg>
+      </div>
+      <figcaption>
+        <strong>The join graph, and the one thing it cannot do.</strong> Both sides key cleanly on
+        <code>nfl_id</code>. But the in-game tracking files contain only the rookie cohort, so the 22
+        players on a snap are never all present — which means the NFL side of any analysis is built from
+        self-referential kinematics plus the Next Gen Stats columns, never from geometry we compute ourselves.
+      </figcaption>
+    </figure>
+
+    <h3>What each file is actually good for</h3>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>File</th><th>Scale</th><th>What it unlocks</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>combine_tracking</code></td>
+            <td class="num">463k frames<br><span class="pill">6,310 attempts</span></td>
+            <td><strong>The entire novelty budget.</strong> 10 Hz x/y/s/a through the 40, 3-cone, shuttle and ~55 position drills. The <em>shape</em> of a movement, not its duration.</td>
+          </tr>
+          <tr>
+            <td><code>combine_results</code></td>
+            <td class="num">510 rows</td>
+            <td>The stopwatch baseline we must beat, plus the three NGS composite scores — which are the incumbent model, so they are a benchmark and never a feature.</td>
+          </tr>
+          <tr>
+            <td><code>player_play</code></td>
+            <td class="num">314k snaps</td>
+            <td><strong>The only relational data.</strong> <code>separation_at_pass_forward</code>, <code>cushion</code>, <code>time_to_pressure</code>, <code>player_get_off</code>, expected YAC, coverage shell, route run.</td>
+          </tr>
+          <tr>
+            <td><code>game_tracking_*</code></td>
+            <td class="num">22.7M frames</td>
+            <td>Self-referential kinematics only: how fast he actually played, how hard he braked, how tight he turned. Plus body orientation <code>o</code>, which the Combine side lacks.</td>
+          </tr>
+          <tr>
+            <td><code>player_career_successes</code></td>
+            <td class="num">510 rows</td>
+            <td>Snaps, starts, accolades. <strong>Opportunity-contaminated</strong> — mostly a measure of draft capital, so a secondary outcome at best.</td>
+          </tr>
+          <tr>
+            <td><code>players</code>, <code>games</code></td>
+            <td class="num">510 · 1,002</td>
+            <td>The spine, plus the draft slot that every claim has to be adjusted against.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Three facts that change the analysis</h3>
+    <div class="grid g3">
+      <div class="card">
+        <span class="tag block">Trap</span>
+        <h4>2024 back-pedal reps are truncated</h4>
+        <p>They stop before the break: median rep 6.0 s versus 11.6 s in 2023, with the braking phase simply absent. Pool the years and rep-to-rep reliability looks like r&nbsp;=&nbsp;0.80; within a year it is ≈&nbsp;0.</p>
+      </div>
+      <div class="card">
+        <span class="tag block">Trap</span>
+        <h4>2025 is a different export</h4>
+        <p>2023–24 coordinates sit on a 1/60-yard grid; 2025 does not, and its median peak speed runs lower. Every drill metric has to be standardised within <code>(drill, draft_year)</code> — fitted on training folds only.</p>
+      </div>
+      <div class="card">
+        <span class="tag note">Opening</span>
+        <h4>13 players never took a snap</h4>
+        <p>The host flagged this as analytically interesting rather than as dirt: perhaps their Combine performance is <em>why</em> they never got the opportunity. A free, host-endorsed hook for the selection story.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="lbl mono">Measurement caution</span>
+      <p>
+        Tracked 40-yard times run about <strong>0.3 s slower</strong> than the official electronic clock,
+        and <code>dis</code> under-counts distance — summing to roughly 37 yards over a 40-yard dash. Neither
+        is a bug to fix; both are reasons never to present a tracking-derived time as "the 40", and to
+        integrate path length from the smoothed trajectory instead.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================= ANALYSIS ============================= -->
+  <section id="analysis">
+    <div class="sec-head"><span class="sec-num mono">02</span><h2>What has to be modelled</h2></div>
+    <p class="sec-sub">
+      Every judge is an NFL team analyst who already believes the Combine predicts nothing — the published
+      base rate is around 2.6% of performance variance. So the finding cannot be a correlation. It has to
+      survive draft position.
+    </p>
+
+    <figure>
+      <div class="figframe">
+        <svg viewBox="0 0 940 340" role="img" aria-label="Causal diagram. Combine performance influences draft slot, which drives opportunity and therefore all counting statistics. The naive path from a Combine feature to career snaps is confounded by draft slot. The defensible path runs from a movement trait to a per-opportunity rate, with draft slot adjusted for.">
+          <defs>
+            <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"/>
+            </marker>
+            <marker id="ar2s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 1 L 9 5 L 0 9 z" fill="#b8431a"/>
+            </marker>
+            <marker id="ar2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 1 L 9 5 L 0 9 z" fill="#0d6e4e"/>
+            </marker>
+          </defs>
+
+          <!-- nodes -->
+          <rect x="18" y="130" width="150" height="52" rx="26" fill="none" stroke="currentColor" stroke-width="2"/>
+          <text x="93" y="152" text-anchor="middle" font-size="12.5" font-weight="650" fill="currentColor">How he moves</text>
+          <text x="93" y="169" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".6" font-family="ui-monospace, Menlo, monospace">10 Hz drill trace</text>
+
+          <rect x="300" y="36" width="150" height="52" rx="26" fill="none" stroke="#b8431a" stroke-width="2"/>
+          <text x="375" y="58" text-anchor="middle" font-size="12.5" font-weight="650" fill="#b8431a">Draft slot</text>
+          <text x="375" y="75" text-anchor="middle" font-size="10.5" fill="#b8431a" opacity=".85" font-family="ui-monospace, Menlo, monospace">teams saw it too</text>
+
+          <rect x="560" y="36" width="150" height="52" rx="26" fill="none" stroke="currentColor" opacity=".6"/>
+          <text x="635" y="58" text-anchor="middle" font-size="12.5" font-weight="650" fill="currentColor">Opportunity</text>
+          <text x="635" y="75" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".6" font-family="ui-monospace, Menlo, monospace">snaps he is given</text>
+
+          <rect x="790" y="36" width="134" height="52" rx="6" fill="none" stroke="currentColor" opacity=".45" stroke-dasharray="4 3"/>
+          <text x="857" y="58" text-anchor="middle" font-size="12" font-weight="600" fill="currentColor" opacity=".75">Career totals</text>
+          <text x="857" y="75" text-anchor="middle" font-size="10" fill="currentColor" opacity=".5" font-family="ui-monospace, Menlo, monospace">snaps, starts</text>
+
+          <rect x="287" y="230" width="176" height="52" rx="26" fill="none" stroke="currentColor" stroke-width="2"/>
+          <text x="375" y="252" text-anchor="middle" font-size="12.5" font-weight="650" fill="currentColor">Movement trait</text>
+          <text x="375" y="269" text-anchor="middle" font-size="9.5" fill="currentColor" opacity=".6" font-family="ui-monospace, Menlo, monospace">brake · bend · transition</text>
+
+          <rect x="589" y="230" width="212" height="52" rx="6" fill="none" stroke="#0d6e4e" stroke-width="2"/>
+          <text x="695" y="252" text-anchor="middle" font-size="12.5" font-weight="650" fill="#0d6e4e">Per-opportunity rate</text>
+          <text x="695" y="269" text-anchor="middle" font-size="9.5" fill="#0d6e4e" opacity=".9" font-family="ui-monospace, Menlo, monospace">separation · cushion · pressure</text>
+
+          <!-- edges -->
+          <path d="M 120 128 L 180 80 L 294 62" fill="none" stroke="#b8431a" stroke-width="1.7" marker-end="url(#ar2s)"/>
+          <text x="176" y="96" font-size="10.5" fill="#b8431a" font-family="ui-monospace, Menlo, monospace">scouts price it in</text>
+
+          <path d="M 450 62 L 554 62" fill="none" stroke="#b8431a" stroke-width="1.7" marker-end="url(#ar2s)"/>
+          <text x="502" y="52" text-anchor="middle" font-size="10.5" fill="#b8431a" font-family="ui-monospace, Menlo, monospace">buys</text>
+
+          <path d="M 710 62 L 784 62" fill="none" stroke="currentColor" opacity=".45" marker-end="url(#ar2)"/>
+
+          <path d="M 162 176 L 281 250" fill="none" stroke="currentColor" stroke-width="1.7" marker-end="url(#ar2)"/>
+          <text x="186" y="228" font-size="10.5" fill="currentColor" opacity=".65" font-family="ui-monospace, Menlo, monospace">we measure it</text>
+
+          <path d="M 469 256 L 583 256" fill="none" stroke="#0d6e4e" stroke-width="1.7" marker-end="url(#ar2g)"/>
+          <text x="526" y="246" text-anchor="middle" font-size="10.5" fill="#0d6e4e" font-family="ui-monospace, Menlo, monospace">the claim</text>
+
+          <!-- adjustment -->
+          <path d="M 375 94 L 375 224" fill="none" stroke="#b8431a" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <circle cx="375" cy="160" r="15" fill="none" stroke="#b8431a" stroke-width="1.5"/>
+          <line x1="366" y1="151" x2="384" y2="169" stroke="#b8431a" stroke-width="1.8"/>
+          <line x1="384" y1="151" x2="366" y2="169" stroke="#b8431a" stroke-width="1.8"/>
+          <text x="398" y="158" font-size="11" font-weight="600" fill="#b8431a">adjust for draft slot,</text>
+          <text x="398" y="174" font-size="11" font-weight="600" fill="#b8431a">or the finding is just scouting</text>
+
+          <line x1="18" y1="310" x2="922" y2="310" stroke="currentColor" opacity=".16"/>
+          <text x="18" y="330" font-size="11.5" fill="currentColor" opacity=".7">Counting outcomes sit downstream of opportunity, so they mostly measure draft capital. Per-opportunity rates do not.</text>
+        </svg>
+      </div>
+      <figcaption>
+        <strong>Why the obvious analysis fails.</strong> Teams saw the same Combine, so draft slot is
+        <em>downstream</em> of Combine performance and <em>upstream</em> of playing time. Regress career snaps
+        on a drill feature and you have rediscovered the draft board. The defensible claim runs along the
+        bottom path: a movement trait against a per-opportunity rate, reported as incremental value over a
+        draft-capital baseline.
+      </figcaption>
+    </figure>
+
+    <h3>The method chain</h3>
+    <div class="grid g3">
+      <div class="card">
+        <h4>1 · Features from raw trajectory</h4>
+        <p>Not from the shipped <code>s</code>/<code>a</code>, which carry an undocumented filter. Re-derive with an explicit 2 Hz zero-phase Butterworth, split acceleration into braking and turning, detect cuts, fit a sprint profile.</p>
+      </div>
+      <div class="card">
+        <h4>2 · Reliability before validity</h4>
+        <p>Most drills have two reps — a ready-made test-retest design. A metric's correlation with anything is capped at √reliability, so the ceiling gets reported next to every result.</p>
+      </div>
+      <div class="card">
+        <h4>3 · Orthogonalise</h4>
+        <p>Residualise against the official drill time and body mass. What survives is the part of the movement signature the stopwatch cannot see — which is the only part worth a submission.</p>
+      </div>
+      <div class="card">
+        <h4>4 · Adjust and shrink</h4>
+        <p>Incremental R² over a draft-capital baseline. Partial pooling so a 40-snap rookie does not outrank a starter on a noisy rate.</p>
+      </div>
+      <div class="card">
+        <h4>5 · Leave one class out</h4>
+        <p>Three draft classes is the whole sample. Train on 2023–24, test on 2025 — and fit every transform inside the fold, or the evaluation quietly becomes transductive.</p>
+      </div>
+      <div class="card">
+        <h4>6 · State the power first</h4>
+        <p>Compute the minimum detectable effect <em>before</em> looking. At n≈70 that is around r&nbsp;=&nbsp;0.36. Showing you knew is the cheapest credibility available.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="lbl mono">A structural edge worth naming</span>
+      <p>
+        The incumbent — the Next Gen Stats draft model — is a position-specific gradient boosting model with
+        <strong>monotonic constraints</strong>. A monotone model cannot represent an optimum; it has no way to
+        encode "too much of this is bad". Any genuine inverted-U in the tracking data is therefore something
+        the incumbent is structurally incapable of finding, not merely something it happened to miss.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================= CANDIDATES ============================= -->
+  <section id="candidates">
+    <div class="sec-head"><span class="sec-num mono">03</span><h2>Where the signal probably is</h2></div>
+    <p class="sec-sub">
+      Tracked peak speed is essentially the 40 time restated. All the upside is in shape-of-motion inside the
+      position drills. Effective samples are 40–120 players per group, so the plan is one lead question, one
+      supporting result, and nothing else.
+    </p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Question</th><th>Group</th><th>Combine signal</th><th>NFL outcome</th><th>n</th><th>Risk</th></tr>
+        </thead>
+        <tbody>
+          <tr class="lead">
+            <td class="num"><strong>1</strong></td>
+            <td><strong>Transition tax → deployment.</strong> Does the cost of a pedal-to-break transition predict the cushion his own coaching staff gives him?</td>
+            <td>DB</td>
+            <td>back-pedal &amp; 45° reaction: velocity-trough depth, recovery time, L/R asymmetry</td>
+            <td><code>cushion</code>, then separation allowed in man</td>
+            <td class="num">~90</td>
+            <td><span class="pill hi">low</span></td>
+          </tr>
+          <tr class="lead">
+            <td class="num"><strong>2</strong></td>
+            <td><strong>Speed retention through the catch → YAC over expected.</strong> A receiver who gathers for the ball bleeds the momentum that makes yards after it.</td>
+            <td>WR·TE</td>
+            <td>gauntlet: speed at ball arrival ÷ speed 0.5 s earlier, plus consistency</td>
+            <td><code>yards_after_catch</code> − expected</td>
+            <td class="num">~95</td>
+            <td><span class="pill md">medium</span></td>
+          </tr>
+          <tr>
+            <td class="num">3</td>
+            <td><strong>Brake versus arc, route-conditional.</strong> Braking should predict separation on sharp breaks, bend on speed routes — and nothing should predict the average.</td>
+            <td>WR</td>
+            <td>3-cone &amp; shuttle plants vs. hoop arc</td>
+            <td><code>separation_at_pass_forward</code> by route family</td>
+            <td class="num">~90</td>
+            <td><span class="pill md">medium</span></td>
+          </tr>
+          <tr>
+            <td class="num">4</td>
+            <td>Bend quality on the arc → time to pressure. The drill geometry <em>is</em> the speed-rush path.</td>
+            <td>EDGE</td>
+            <td>apex speed ÷ straight-line peak; min turn radius</td>
+            <td><code>time_to_pressure</code></td>
+            <td class="num">40–50</td>
+            <td><span class="pill lo">high</span></td>
+          </tr>
+          <tr>
+            <td class="num">5</td>
+            <td>Left/right asymmetry as a scouting number — scouts have always said "stiff turning one way".</td>
+            <td>WR·DB</td>
+            <td>left vs right slot routes; the athlete is his own control</td>
+            <td>separation by route direction</td>
+            <td class="num">~90</td>
+            <td><span class="pill hi">low</span></td>
+          </tr>
+          <tr>
+            <td class="num">6</td>
+            <td>Motion-onset latency from cued drills → get-off. Directly answers a published null.</td>
+            <td>DL</td>
+            <td>cue-to-movement time in bag drills</td>
+            <td><code>player_get_off</code></td>
+            <td class="num">65–68</td>
+            <td><span class="pill lo">very high</span></td>
+          </tr>
+          <tr class="dead">
+            <td class="num">—</td>
+            <td><strong>Known dead end:</strong> pass-pro mirror reversals → pressure allowed. Published negative result; revisit only by narrowing the endpoint, or by making the failure itself the point.</td>
+            <td>OL</td>
+            <td><code>PASS_PRO_MIRROR_DRILL</code></td>
+            <td><code>pressure_allowed</code></td>
+            <td class="num">57</td>
+            <td><span class="pill">avoid</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.86rem;color:var(--ink-3);max-width:76ch;">
+      Sample sizes are drawn from other participants' public exploration and are <strong>unverified</strong>.
+      The first job once the data lands is to re-derive every one of them.
+    </p>
+  </section>
+
+  <!-- ============================= SUBMISSION ============================= -->
+  <section id="submission">
+    <div class="sec-head"><span class="sec-num mono">04</span><h2>What actually gets submitted</h2></div>
+    <p class="sec-sub">
+      A Kaggle Writeup with a public notebook attached. No model file, no predictions, no leaderboard.
+      Four human scores, averaged.
+    </p>
+
+    <h3>The rubric, to scale</h3>
+    <div class="rubric" role="img" aria-label="Scoring weights: Football 30 percent, Data Science 30 percent, Writeup 20 percent, Data Visualization 20 percent.">
+      <div class="rb1">30%</div><div class="rb2">30%</div><div class="rb3">20%</div><div class="rb4">20%</div>
+    </div>
+    <div class="rubric-key">
+      <div class="rb1">Football value</div><div class="rb2">Data science</div><div class="rb3">Writeup</div><div class="rb4">Visualisation</div>
+    </div>
+    <div class="split-note">
+      <div class="sn-l">60% — is it right, and does it matter</div>
+      <div class="sn-r">40% — can a tired reader follow it</div>
+    </div>
+    <p>
+      That 40% is the asymmetry worth exploiting. It is almost entirely under our control, and it is where a
+      field of Kaggle-native entrants reliably underinvests. The judges are team analysts grading after
+      hours, on top of day jobs. One of them, having graded a cycle, published the bar: <em>"your submission
+      should look expensive"</em> and <em>"if I have to zoom in 27 times to read the legends that's not going
+      to help your case."</em>
+    </p>
+
+    <div class="grid g2">
+      <div>
+        <h3>The word budget</h3>
+        <ol class="budget">
+          <li><span class="nm">Lede / TL;DR</span><span class="bar"><i style="width:27.5%"></i></span><span class="w">110</span></li>
+          <li><span class="nm">Motivation</span><span class="bar"><i style="width:42.5%"></i></span><span class="w">170</span></li>
+          <li><span class="nm">Data &amp; scope</span><span class="bar"><i style="width:30%"></i></span><span class="w">120</span></li>
+          <li><span class="nm">Method</span><span class="bar"><i style="width:100%"></i></span><span class="w">400</span></li>
+          <li><span class="nm">Validation</span><span class="bar"><i style="width:70%"></i></span><span class="w">280</span></li>
+          <li><span class="nm">Results</span><span class="bar"><i style="width:95%"></i></span><span class="w">380</span></li>
+          <li><span class="nm">Application</span><span class="bar"><i style="width:57.5%"></i></span><span class="w">230</span></li>
+          <li><span class="nm">Limitations</span><span class="bar"><i style="width:32.5%"></i></span><span class="w">130</span></li>
+          <li><span class="nm">Conclusion</span><span class="bar"><i style="width:15%"></i></span><span class="w">60</span></li>
+          <li><span class="nm">Total</span><span class="bar"></span><span class="w">1,895</span></li>
+        </ol>
+        <p style="font-size:.86rem;color:var(--ink-3);margin-top:10px;">
+          The usual collapse is Method eating 900 words while Application gets two sentences. Application is
+          the section the Football score is actually about.
+        </p>
+      </div>
+      <div>
+        <h3>Nine figure slots</h3>
+        <ul class="clean">
+          <li><strong>Hero.</strong> One player's trace against the cohort envelope, annotated in words on the chart.</li>
+          <li><strong>The draft-slot-adjusted effect.</strong> The figure that answers the only real objection.</li>
+          <li><strong>Validation panel.</strong> Split-half reliability, held-out class, calibration.</li>
+          <li><strong>⭐ The differentiator.</strong> The same athlete's Combine drill trace beside his NFL in-game trace — same units, same code path. No prior Big Data Bowl could produce this image.</li>
+          <li><strong>Leaderboard.</strong> Real names, uncertainty bars, team marks.</li>
+          <li><strong>Monotone ladder.</strong> Decile of drill score against mean outcome. No model required, and among the most persuasive charts available.</li>
+          <li><strong>The "tells" table.</strong> Condition, observed rate, predicted rate, how often it occurs — against a cohort base rate.</li>
+          <li><strong>Application mock-up.</strong> A draft card with the metric sitting next to the 40 and the NGS score.</li>
+          <li><strong>Reserve.</strong> Filter sensitivity, or the vendor-vs-derived validation panel.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="lbl mono">Mechanics that zero a submission</span>
+      <p>
+        Notebook left private · writeup left in draft at the deadline · no Media Gallery cover image · over
+        2,000 words · ten or more figures · a notebook that never touches the tracking data. Each of these is
+        an automatic loss, independent of how good the work is.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================= STATUS ============================= -->
+  <section id="status">
+    <div class="sec-head"><span class="sec-num mono">05</span><h2>Where the build stands</h2></div>
+
+    <div class="grid g2">
+      <div>
+        <h3>Shipped</h3>
+        <ul class="clean">
+          <li class="done">Competition, rules and rubric captured; every host clarification on the forum read and recorded</li>
+          <li class="done">All 9 files and 158 columns documented, annotated where the shipped data contradicts the published dictionary</li>
+          <li class="done">Signal-processing core: explicit filtering, braking/turning split, curvature, cut detection, sprint profiling — validated against synthetic ground truth</li>
+          <li class="done">Per-attempt Combine features, in-game outcome aggregation, reliability and draft-capital controls</li>
+          <li class="done">An audit script that re-derives every data claim from the shipped files rather than trusting the forum</li>
+          <li class="done">Synthetic fixtures reproducing the real schema <em>and</em> its traps, so the pipeline runs end to end before the download</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Blocked or open</h3>
+        <ul class="clean">
+          <li class="block"><strong>No competition data.</strong> Needs a Kaggle account that has joined the hackathon, plus an API token. Everything downstream waits on this.</li>
+          <li class="block"><strong>GitHub push is unauthenticated</strong> on this machine. Commits are safe locally.</li>
+          <li class="todo"><strong>Open or University track?</strong> Both are $45,000; University is restricted to entirely-undergraduate teams and is a far weaker field.</li>
+          <li class="todo"><strong>Which question?</strong> Recommendation is the DB transition tax, with gauntlet speed retention as the headline figure if its ball-tracking coverage survives the audit.</li>
+          <li class="todo"><strong>A football voice.</strong> One quoted sentence from someone who has coached the position is disproportionately persuasive to this panel.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Compiled 10 October 2026 from the Kaggle competition pages, the full host-answered discussion forum, and
+    a parallel research pass over eight years of Big Data Bowl winners, the Combine-performance literature,
+    and the public NFL analytics field. Claims drawn from other participants' public work are flagged in the
+    repository and must be re-derived before use.
+  </footer>
+</div>
+
+</body>
+</html>
