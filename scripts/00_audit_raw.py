@@ -52,6 +52,14 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 _lines: list[str] = []
 
+#: Questions the audit exists to settle, filled in by the checks and rendered as the
+#: first section of the report. See docs/plan.md step 1.
+DECISIONS: dict[str, dict] = {}
+
+
+def decide(key: str, question: str, answer: str, detail: str = "", ok: bool | None = None) -> None:
+    DECISIONS[key] = {"q": question, "a": answer, "detail": detail, "ok": ok}
+
 
 def emit(s: str = "") -> None:
     print(s)
@@ -216,6 +224,17 @@ def check_cohort(from_csv: bool) -> None:
     emit(f"- with any in-game play: **{have_pp.height}** "
          f"(host: 13 of 510 never reached the field)")
 
+    pos_counts = players.group_by("nfl_position").len().sort("len", descending=True)
+    has_qb = "QB" in players["nfl_position"].to_list()
+    decide("qb_present", "Are there any quarterbacks in the cohort?",
+           "yes" if has_qb else "**no**",
+           "The documented position list omits QB. If confirmed, QB-centric public work "
+           "(nfelo QB rankings and similar) does not transfer as a data source.",
+           ok=not has_qb)
+    decide("position_counts", "Real sample size per position group",
+           ", ".join(f"{r[0]} {r[1]}" for r in pos_counts.rows()[:12]),
+           "Every sample-size estimate in docs/research-brief.md is unverified until this line.")
+
     never = players.join(have_pp, on="nfl_id", how="anti")
     h(3, f"The {never.height} prospects with no NFL snap")
     table(never.select(["nfl_id", "display_name", "draft_year", "nfl_position",
@@ -298,6 +317,17 @@ def check_ball_frames(from_csv: bool) -> None:
         emit(f"\n- events where BALL `nfl_id` == PLAYER `nfl_id`: "
              f"**{same}/{per_event.height}** (host: BALL rows carry the drilling athlete's id)")
 
+        g = ball.filter(pl.col("drill_name").cast(pl.Utf8).str.contains("GAUNTLET"))
+        n_g = g["nfl_id"].n_unique()
+        decide("gauntlet_ball", "How many prospects have ball tracking in the gauntlet?",
+               f"{n_g} players, {g['event_id'].n_unique()} events",
+               "Research question 'speed retention through the catch' needs roughly 40+ "
+               "to carry a submission; below that it is an appendix figure.",
+               ok=n_g >= 40)
+    else:
+        decide("gauntlet_ball", "How many prospects have ball tracking in the gauntlet?",
+               "none found", "", ok=False)
+
 
 def check_quantization(from_csv: bool) -> None:
     h(2, "7. Coordinate quantization by draft year")
@@ -366,6 +396,21 @@ def check_backpedal(from_csv: bool) -> None:
         pl.col("peak_s").median().round(2).alias("median_peak_s"),
         pl.col("min_a").median().round(2).alias("median_min_a"),
     ).sort(["drill_name", "draft_year"]), max_rows=40)
+
+    byyr = per_rep.group_by("draft_year").agg(pl.col("dur_s").median().alias("m")).sort("draft_year")
+    if byyr.height >= 2:
+        ms = dict(zip(byyr["draft_year"].to_list(), byyr["m"].to_list()))
+        other = [v for k, v in ms.items() if k != 2024 and v is not None]
+        trunc = (2024 in ms and ms[2024] is not None and other
+                 and ms[2024] < 0.75 * (sum(other) / len(other)))
+        decide("backpedal_2024", "Is the 2024 back-pedal truncation real?",
+               "**yes**" if trunc else "no",
+               "median rep duration by year: "
+               + ", ".join(f"{k} {v:.1f}s" for k, v in ms.items() if v is not None)
+               + (". Idea 'transition tax' runs on two draft classes, not three."
+                  if trunc else ""),
+               ok=not trunc)
+
     emit()
     emit("> A truncated phase cannot be repaired by centering. If 2024 is confirmed truncated, "
          "either drop that drill-year or restrict to a complete-phase subset, and report the "
@@ -397,6 +442,11 @@ def check_dir_convention(from_csv: bool) -> None:
                         for k, v in sorted(agg.items(), key=lambda kv: kv[1])]))
     emit()
     emit(f"- tested on **{len(results)}** 40-yard-dash attempts")
+    best = min(agg, key=agg.get)
+    decide("dir_convention", "Which `dir` angle convention does the data use?",
+           f"`{best}` ({agg[best]}° median error)",
+           "Lock this in before building any angle-derived feature.",
+           ok=agg[best] < 10)
     emit("> The winning convention should be near 0 deg and the others clearly worse. "
          "Lock it in before building any angle-derived feature.")
 
@@ -417,6 +467,74 @@ def check_frame_gaps(from_csv: bool) -> None:
         pl.col("dt").max().round(2).alias("max_dt_s"),
         (pl.col("dt") > 0.15).mean().round(5).alias("frac_gapped"),
     ).sort("drill_type"))
+
+
+def check_forty_fidelity(from_csv: bool) -> None:
+    h(2, "12. Tracked 40 time vs the official clock, and the `dis` under-count")
+    emit("Reported elsewhere: a 40 reconstructed from tracking runs ~0.3 s slower than the "
+         "official electronic time (correlated ~0.91), and `dis` sums to ~37 yd over a "
+         "40-yard dash. Both change how results can be presented.")
+    emit()
+    ct = (_scan("combine_tracking", from_csv)
+          .filter((pl.col("entity_type") == "PLAYER")
+                  & (pl.col("drill_type") == "FORTY_YARD_DASH"))
+          .select(["nfl_id", "event_id", "time", "x", "y", "s", "dis"])
+          .collect().sort(["event_id", "time"]))
+    if ct.is_empty():
+        emit("_no 40-yard-dash frames_")
+        return
+
+    rows = []
+    for eid, g in ct.partition_by("event_id", as_dict=True).items():
+        t = g["time"].dt.timestamp("ms").to_numpy() / 1000.0
+        x, y = g["x"].to_numpy(), g["y"].to_numpy()
+        step = np.hypot(np.diff(x), np.diff(y))
+        path = float(step.sum())
+        moving = np.nonzero(g["s"].to_numpy() > 0.3)[0]
+        t0 = t[moving[0]] if moving.size else t[0]
+        cum = np.concatenate([[0.0], np.cumsum(step)])
+        hit = np.nonzero(cum >= 40.0)[0]
+        t40 = float(t[hit[0]] - t0) if hit.size else np.nan
+        rows.append({"nfl_id": g["nfl_id"][0], "tracked_40": t40,
+                     "path_len": path, "dis_sum": float(g["dis"].sum())})
+    d = pl.DataFrame(rows).group_by("nfl_id").agg(
+        pl.col("tracked_40").min(), pl.col("path_len").max(), pl.col("dis_sum").max())
+
+    cr = _scan("combine_results", from_csv).select(["nfl_id", "forty"]).collect()
+    j = d.join(cr, on="nfl_id", how="inner").drop_nulls(["tracked_40", "forty"])
+    j = j.filter(pl.col("tracked_40").is_finite())
+    if j.height >= 3:
+        diff = (j["tracked_40"] - j["forty"]).to_numpy()
+        r = float(np.corrcoef(j["tracked_40"].to_numpy(), j["forty"].to_numpy())[0, 1])
+        table(pl.DataFrame([{
+            "n_players": j.height,
+            "median_tracked_minus_official_s": round(float(np.median(diff)), 3),
+            "mean_diff_s": round(float(np.mean(diff)), 3),
+            "corr_tracked_vs_official": round(r, 3),
+        }]))
+        decide("forty_offset",
+               "Do tracking-derived 40 times run slow vs the official clock?",
+               f"median offset {np.median(diff):+.2f} s (corr {r:.2f}, n={j.height})",
+               "Never present a tracking-derived time as 'the 40'.")
+    else:
+        decide("forty_offset",
+               "Do tracking-derived 40 times run slow vs the official clock?",
+               "not computable",
+               "Fewer than 3 attempts reach a 40-yard cumulative path — check whether the "
+               "tracked window ends before the finish line.", ok=False)
+    emit()
+    h(3, "`dis` as a distance measure")
+    ratio = (j["dis_sum"] / j["path_len"]).drop_nulls() if "dis_sum" in j.columns else None
+    tbl = d.select([
+        pl.col("path_len").median().round(2).alias("median_integrated_path_yd"),
+        pl.col("dis_sum").median().round(2).alias("median_sum_of_dis_yd"),
+        (pl.col("dis_sum") / pl.col("path_len")).median().round(4).alias("dis_over_path"),
+    ])
+    table(tbl)
+    rr = float(tbl["dis_over_path"][0])
+    decide("dis_reliable", "Is `dis` usable as a distance measure?",
+           ("no" if abs(rr - 1) > 0.02 else "yes"),
+           f"sum(dis) / integrated path = {rr:.3f} over a 40-yard dash")
 
 
 def check_pass_rush_nulls(from_csv: bool) -> None:
@@ -459,15 +577,33 @@ def main() -> int:
 
     for fn in (check_row_counts, check_keys, check_joins, check_cohort, check_drills,
                check_ball_frames, check_quantization, check_backpedal,
-               check_dir_convention, check_frame_gaps, check_pass_rush_nulls):
+               check_dir_convention, check_frame_gaps, check_pass_rush_nulls,
+               check_forty_fidelity):
         try:
             fn(args.from_csv)
         except Exception as exc:  # keep auditing even if one check fails
             h(2, f"{fn.__name__} — FAILED")
             emit(f"```\n{type(exc).__name__}: {exc}\n```")
 
+    # the decisions block is written first but can only be filled in last
+    head = ["# Data audit — NFL Big Data Bowl 2027", "",
+            "Generated by `scripts/00_audit_raw.py`. Every number is derived from the "
+            "shipped files; forum claims are quoted alongside so the two can be compared.",
+            "", "## Decisions this audit settles", "",
+            "See `docs/plan.md` step 1. These are the questions that determine which "
+            "research question is viable.", "",
+            "| Question | Answer | What it means |", "|---|---|---|"]
+    for v in DECISIONS.values():
+        mark = "" if v["ok"] is None else ("✅ " if v["ok"] else "⚠️ ")
+        head.append(f"| {v['q']} | {mark}{v['a']} | {v['detail']} |")
+    if not DECISIONS:
+        head.append("| _no checks reported a decision_ | | |")
+    head.append("")
+    head.append("---")
+
+    body = _lines[3:] if _lines[:1] == ["# Data audit — NFL Big Data Bowl 2027"] else _lines
     OUT_MD.parent.mkdir(parents=True, exist_ok=True)
-    OUT_MD.write_text("\n".join(_lines) + "\n")
+    OUT_MD.write_text("\n".join(head + body) + "\n")
     print(f"\nWrote {OUT_MD}")
     return 0
 

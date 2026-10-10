@@ -175,7 +175,7 @@ def build(out: Path) -> None:
             # 40: sometimes only attempt 2 survives (host: a dropped attempt had a data problem)
             for att in ([2] if RNG.random() < 0.2 else [1, 2][: 1 + (RNG.random() < 0.6)]):
                 t_, x_, y_ = sprint_xy(vmax * (1 + RNG.normal(0, 0.012)),
-                                       tau * (1 + RNG.normal(0, 0.04)), 5.2, 26.0)
+                                       tau * (1 + RNG.normal(0, 0.04)), 6.2, 26.0)
                 add(t_, x_ + 40, y_, "FORTY_YARD_DASH", "FORTY_YARD_DASH", att)
 
             if combine[-1]["three_cone"] is not None:
