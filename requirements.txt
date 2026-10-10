@@ -1,0 +1,21 @@
+# core
+numpy>=2.0
+pandas>=2.2
+pyarrow>=16
+polars>=1.0
+duckdb>=1.0
+
+# stats / modelling
+scipy>=1.13
+scikit-learn>=1.5
+statsmodels>=0.14
+
+# viz
+matplotlib>=3.9
+seaborn>=0.13
+plotly>=5.22
+
+# tooling
+tqdm>=4.66
+kaggle>=1.6
+jupyterlab>=4.2

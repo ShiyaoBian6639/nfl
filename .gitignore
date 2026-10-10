@@ -1,0 +1,31 @@
+# data (competition data is CC BY-NC and must not be redistributed)
+data/raw/
+data/interim/
+data/processed/
+*.csv
+*.parquet
+*.zip
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# os / editor
+.DS_Store
+.vscode/
+.idea/
+
+# secrets
+.env
+kaggle.json
+
+# figures are regenerated; keep the curated ones explicitly
+reports/figures/_scratch/
+.venv/
+data/_fixture_run/
