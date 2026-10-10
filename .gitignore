@@ -29,3 +29,7 @@ kaggle.json
 reports/figures/_scratch/
 .venv/
 data/_fixture_run/
+
+# generated from whatever data is mounted; regenerate with `make audit`
+reports/data_audit.md
+reports/audit/
