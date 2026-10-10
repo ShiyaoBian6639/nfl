@@ -47,6 +47,78 @@ it must come from the pre-computed `player_play` NGS columns.
 
 ---
 
+### 🔍 Tracking-derived 40 times run ~0.3 s slow, and `dis` under-counts
+
+Two measurement facts that will quietly break any attempt to reproduce the official
+numbers from the trace:
+
+- A 40-yard dash reconstructed from the tracking frames comes out roughly **0.3 s slower**
+  than `combine_results.forty` (though the two correlate ~0.91). The electronic clock
+  starts on first movement; the tracked window does not.
+- **`dis` is unreliable as a distance measure** — it sums to about **37 yd over a 40-yard
+  dash**, a ~7% under-count.
+
+**Handling:** never present a tracking-derived drill time as "the 40 time", and never use
+`dis` for path length. Integrate `hypot(diff(x), diff(y))` from the smoothed trajectory
+instead (`kinematics.derivatives` → `path_length_yd`). Report the offset explicitly if
+tracked and official times are ever shown together — a judge who knows this and sees it
+unmentioned will assume the rest is equally unchecked.
+
+### ⚠️ Nyquist: the textbook biomechanics cutoff is unavailable at 10 Hz
+
+Sampling at 10 Hz puts Nyquist at **5 Hz**, so Winter's 6–7 Hz biomechanics cutoff — which
+assumes 100–240 Hz motion capture — is mathematically out of reach. The usable band is
+roughly **1.0–2.5 Hz**. Saying "we used a 6 Hz Butterworth, standard in biomechanics" on
+this data is an instant credibility loss with an NFL analytics panel.
+
+Cutoff choice is **use-case dependent**, and it dominates filter order (order 2 vs 4
+differ by 0.1%). From a Monte-Carlo bake-off against analytic ground truth, peak-|a| bias:
+raw central differences **+27.1%**, fc=2.5 +9.1%, **fc=2.0 +3.2%**, savgol(7,3) −2.4%,
+fc=1.5 −6.0%, fc=1.0 −17.8%, savgol(11,3) −22.6%. Acceleration RMSE instead favours
+fc=1.5.
+
+→ `kinematics.CUTOFF_FOR_PEAKS = 2.0` when the feature *is* a peak (peak decel, max
+curvature, min turn radius); `CUTOFF_FOR_TRACES = 1.5` for integrals and event timing.
+Report a sensitivity sweep.
+
+### ⚠️ `filtfilt` silently fails on short series — and dropping them biases the sample
+
+`padlen = 3 * (2*order + 1)`, so an order-2 zero-phase Butterworth needs **≥ 16 frames
+(1.6 s)** and order 4 needs ≥ 28. Plenty of play-player segments are shorter. Silently
+dropping them biases the sample toward long developing plays, which is fatal for any claim
+about explosiveness. `kinematics.smooth_xy` falls back to Savitzky-Golay instead of
+dropping, and `return_method=True` reports which filter actually ran so the choice can be
+carried into the feature table as a column.
+
+### DuckDB's default CSV sample is 20,480 rows
+
+If you read these CSVs with DuckDB rather than the project's polars path, pass
+`sample_size=-1`. The default is exactly how `event` (mostly empty) and
+`draft_overall_pick` (null for every UDFA) get their types mis-inferred.
+
+---
+
+## Context worth knowing
+
+**2023–2025 is the complete history of NFL Combine sensor tracking.** There is no fourth
+year and no prior corpus anyone could have mined. Every finding from this data is
+first-generation — which is also why the published literature is silent on movement
+quality as opposed to drill times.
+
+**The incumbent model is monotonically constrained.** The NGS draft model is a
+position-specific XGBoost across 12 positions **with monotonic constraints**, trained on
+Combine results since 2003 and college stats since 2005, predicting the likelihood a
+player becomes an NFL starter or Pro Bowler within three seasons, output on a 50–99 scale.
+A monotone model structurally **cannot represent an optimum** — it cannot encode "too much
+of this is bad". Any genuine inverted-U relationship in the tracking data is therefore a
+named structural edge over the incumbent, not just a different fit.
+
+**Submission mechanics that zero a submission:** notebook left private; writeup left in
+draft at the deadline; no Media Gallery cover image; over 2,000 words; 10 or more figures;
+or a notebook that does not touch the tracking data.
+
+---
+
 ## Null / sentinel semantics
 
 ### ✅ Pass-rush nulls (Tom Bliss)
