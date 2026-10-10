@@ -267,6 +267,31 @@ def build(out: Path) -> None:
                     sack=float(RNG.random() < 0.02), tackle=float(RNG.random() < 0.08),
                     assist=0.0, tackle_for_loss=float(RNG.random() < 0.01),
                     coverage_assignment=RNG.choice(["MAN", "DEEP_THIRD", "FLAT", "HOOK_CURL"]),
+                    # --- remaining documented columns, so the fixture mirrors the real schema
+                    pre_snap_home_team_win_probability=round(float(RNG.uniform(0.05, 0.95)), 4),
+                    pre_snap_visitor_team_win_probability=round(float(RNG.uniform(0.05, 0.95)), 4),
+                    home_team_win_probability_added=round(float(RNG.normal(0, 0.04)), 4),
+                    visitor_team_win_probility_added=round(float(RNG.normal(0, 0.04)), 4),
+                    expected_points=round(float(RNG.normal(1.2, 1.8)), 3),
+                    play_nullified_by_penalty=("Y" if RNG.random() < 0.04 else "N"),
+                    penalty_yards=(None if RNG.random() < 0.95 else float(RNG.choice([5, 10, 15]))),
+                    pre_penalty_yards_gained=int(RNG.normal(5, 7)),
+                    in_motion_at_ball_snap=bool(RNG.random() < 0.15),
+                    rec_yards=(round(float(abs(RNG.normal(9, 7))), 1) if is_pass and RNG.random() < 0.2 else None),
+                    rush_yards=(None if is_pass else round(float(RNG.normal(4, 5)), 1)),
+                    fumble=float(RNG.random() < 0.004),
+                    fumble_lost=float(RNG.random() < 0.002),
+                    extended_sack_allowed=float(RNG.random() < 0.01),
+                    pass_rushers_encountered=(float(RNG.integers(0, 3)) if is_pass else None),
+                    peak_pressure_probability_allowed=(round(float(RNG.beta(2, 8)), 4) if is_pass else None),
+                    time_to_pressure_allowed=(None if RNG.random() < 0.9
+                                              else round(float(RNG.normal(2.5, 0.6)), 2)),
+                    caused_forced_fumble=float(RNG.random() < 0.005),
+                    recovered_fumble=float(RNG.random() < 0.004),
+                    time_to_qb_hurry=(None if RNG.random() < 0.85
+                                      else round(float(RNG.normal(2.8, 0.6)), 2)),
+                    coverage_assignment_at_snap=RNG.choice(["MAN", "DEEP_THIRD", "FLAT", "HOOK_CURL"]),
+                    unblocked_pressure=(None if RNG.random() < 0.97 else 1.0),
                 ))
                 # tracking frames for this snap
                 t_, x_, y_ = sprint_xy(8.5 + RNG.normal(0, 0.6), 1.2, float(RNG.uniform(2.5, 5.0)), float(RNG.uniform(5, 48)))
