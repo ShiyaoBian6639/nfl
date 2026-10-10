@@ -62,9 +62,9 @@ die on the answers:
 | Does `dir` match the 0° = +y convention? | Check 9 of the audit answers this empirically |
 | Do tracked 40 times really run ~0.3 s slow? | Determines whether tracked and official times can ever be shown together |
 
-### 2 · Pick the research question — *needs a human decision*
+### 2 · Pick the research question — *on the evidence, after step 1*
 
-Recommended slate from the brief:
+Decided: we choose once the audit is in. The ranked slate going in:
 
 - **Lead: #3 — DB "transition tax" → `cushion`.** Best signal-to-noise, largest n (122
   DB), and predicting a *coaching decision* rather than a noisy per-play outcome is the
@@ -106,15 +106,21 @@ under 2,000 words · fewer than 10 figures · tracking data actually used.
 
 ---
 
-## Decisions needed from you
+## Decisions made
 
-1. **Open Track or University Track?** Both are $45,000. University is restricted to
-   entirely-undergraduate teams — a far weaker field if anyone on the team qualifies.
-2. **Kaggle access.** Who joins the hackathon and provides the API token?
-3. **Which research question?** Recommendation above; happy to run the audit first and
-   decide on evidence.
-4. **Team.** Max 5, one submission. Is anyone else joining?
-5. **A football voice.** One quoted sentence from someone who has coached or played the
+- **Open Track.** $45,000: three finalists at $10,000, three runners-up at $5,000.
+  University Track is out of scope.
+- **The research question waits on the audit.** Several candidates live or die on facts
+  only the data can settle, so `reports/data_audit.md` now opens with a
+  *"Decisions this audit settles"* table answering exactly those questions.
+
+## Still open
+
+1. **Kaggle access.** Join the hackathon, then `.venv/bin/kaggle auth login`. Everything
+   downstream is blocked on this.
+2. **GitHub auth.** Commits are local; `git push -u origin main` needs credentials.
+3. **Team.** Max 5, one submission. Is anyone else joining?
+4. **A football voice.** One quoted sentence from someone who has coached or played the
    position is disproportionately persuasive to this panel. Do we know anyone?
 
 ## Risks

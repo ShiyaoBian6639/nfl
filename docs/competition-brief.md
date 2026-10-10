@@ -42,7 +42,7 @@ The deliverable is a **Kaggle Writeup** with an attached **public Kaggle Noteboo
     gets the finalist money — but the Indianapolis presentation **cannot be given remotely**, and a
     non-attending finalist is **ineligible for the Grand Prize**. NFL covers travel and lodging.
 
-> Which track applies to us is an open question — see `docs/plan.md`. Open Track is the default assumption.
+> **We are entering the Open Track** (decided 2026-10-10). University Track is irrelevant to us.
 
 ## Submission requirements (hard constraints)
 
